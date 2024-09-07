@@ -6,11 +6,9 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.itheima.prize.commons.config.RedisKeys;
-import com.itheima.prize.commons.db.entity.CardGame;
-import com.itheima.prize.commons.db.entity.CardGameRules;
-import com.itheima.prize.commons.db.entity.CardUser;
-import com.itheima.prize.commons.db.entity.ViewCardUserHit;
+import com.itheima.prize.commons.db.entity.*;
 import com.itheima.prize.commons.db.mapper.CardGameRulesMapper;
+import com.itheima.prize.commons.db.service.CardGameProductService;
 import com.itheima.prize.commons.db.service.CardGameRulesService;
 import com.itheima.prize.commons.db.service.CardGameService;
 import com.itheima.prize.commons.db.mapper.CardGameMapper;
@@ -22,8 +20,11 @@ import org.springframework.stereotype.Service;
 
 import java.sql.Time;
 import java.time.LocalDateTime;
-import java.util.Date;
-import java.util.List;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.stream.Collectors;
 
 /**
 * @author shawn
@@ -39,6 +40,8 @@ public class CardGameServiceImpl extends ServiceImpl<CardGameMapper, CardGame>
     private CardGameMapper cardGameMapper;
     @Autowired
     private CardGameRulesMapper cardGameRulesMapper;
+    @Autowired
+    private CardGameProductService GameProductService;
     @Autowired
     private RedisUtil redisUtil;
 
@@ -78,18 +81,53 @@ public class CardGameServiceImpl extends ServiceImpl<CardGameMapper, CardGame>
     public void listAndSaveAboutToStartGames() {
         log.info("缓存预热");
         LocalDateTime begin = LocalDateTime.now();
-        LocalDateTime end = begin.plusMinutes(100);
+        LocalDateTime end = begin.plusMinutes(1000);
 
-        List<CardGame> cardGameList =  cardGameMapper.selectAboutToStartGames(begin, end);
+        List<CardGame> cardGameList = cardGameMapper.selectAboutToStartGames(begin, end);
         for (CardGame game : cardGameList) {
-            //缓存活动基本信息
-            redisUtil.set(RedisKeys.INFO+game.getId(),game,-1);
-            //缓存策略信息
+            // 缓存活动基本信息
+            redisUtil.set(RedisKeys.INFO + game.getId(), game, -1);
+
+            // 缓存策略信息
             List<CardGameRules> cardGameRulesList = cardGameRulesMapper.listGameRulesByGameId(game.getId());
-            for (CardGameRules r : cardGameRulesList){
-                redisUtil.hset(RedisKeys.MAXGOAL+game.getId(),r.getUserlevel()+"",r.getGoalTimes());
-                redisUtil.hset(RedisKeys.MAXENTER+game.getId(),r.getUserlevel()+"",r.getEnterTimes());
+            for (CardGameRules r : cardGameRulesList) {
+                redisUtil.hset(RedisKeys.MAXGOAL + game.getId(), r.getUserlevel() + "", r.getGoalTimes());
+                redisUtil.hset(RedisKeys.MAXENTER + game.getId(), r.getUserlevel() + "", r.getEnterTimes());
             }
+            // 抽奖令牌桶
+            List<Map<Long, CardProductDto>> tokenList = new ArrayList<>();
+
+            // 查询活动对应的奖品ID和数量
+            List<CardProductDto> gameProductList = GameProductService.listGameProductsByGameId(game.getId());
+
+            // 在活动时间段内生成随机时间戳做令牌
+            for (CardProductDto product : gameProductList) {
+                Date gameStartTime = game.getStarttime();
+                Date gameEndTime = game.getEndtime();
+
+                // 获取游戏开始和结束时间的时间戳（毫秒）
+                long startMillis = gameStartTime.getTime();
+                long endMillis = gameEndTime.getTime();
+
+                // 生成随机中奖时间戳（毫秒级）
+                long randomStartMillis = ThreadLocalRandom.current().nextLong(startMillis, endMillis);
+                // 解决令牌重复问题：将（时间戳*1000+3位随机数）作为令牌（防止时间段短奖品多时重复）。
+                // 抽奖时将抽中的令牌/1000，还原真实时间戳
+                long duration = endMillis - randomStartMillis;
+                long rnd = randomStartMillis + new Random().nextInt((int) duration);
+                long token = rnd * 1000 + new Random().nextInt(999);
+
+                // 将时间戳与对应的奖品信息关联
+                Map<Long, CardProductDto> tokenMap = new HashMap<>();
+                tokenMap.put(token, product);
+                tokenList.add(tokenMap);
+            }
+
+            // 按时间戳从小到大排序
+            tokenList.sort((m1, m2) -> Long.compare(m1.keySet().iterator().next(), m2.keySet().iterator().next()));
+
+            // 将抽奖令牌桶存入 Redis，从右侧入队
+            redisUtil.rightPushAll(RedisKeys.TOKENS + game.getId(), tokenList);
         }
     }
 }

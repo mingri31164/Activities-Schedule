@@ -1,5 +1,6 @@
 package com.itheima.prize.commons.utils;
 
+import com.itheima.prize.commons.db.entity.CardProductDto;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
@@ -185,7 +186,7 @@ public final class RedisUtil {
      * @param map 对应多个键值
      * @return true 成功 false 失败
      */
-    public boolean hmset(String key, Map<String, Object> map) {
+    public boolean hmset(String key, Map<String, CardProductDto> map) {
         try {
             redisTemplate.opsForHash().putAll(key, map);
             return true;
