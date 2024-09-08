@@ -67,7 +67,6 @@ public class GameController {
             @ApiImplicitParam(name="gameid",value = "活动id",example = "1",required = true)
     })
     public ApiResult<List<CardProductDto>> products(@PathVariable int gameid) {
-        //TODO
         List<CardProductDto> gameProductList = GameProductService.listGameProductsByGameId(gameid);
 
         if (gameProductList.isEmpty()) {
@@ -85,9 +84,7 @@ public class GameController {
             @ApiImplicitParam(name = "limit",value = "每页条数",defaultValue = "10",dataType = "int",example = "3",required = true)
     })
     public ApiResult<PageBean<ViewCardUserHit>> hit(@PathVariable int gameid,@PathVariable int curpage,@PathVariable int limit) {
-        //TODO
         PageBean<ViewCardUserHit> pageBean = viewCardUserHitService.pageUserHit(gameid,curpage,limit);
-
         return new ApiResult<>(1,"成功",pageBean);
     }
 

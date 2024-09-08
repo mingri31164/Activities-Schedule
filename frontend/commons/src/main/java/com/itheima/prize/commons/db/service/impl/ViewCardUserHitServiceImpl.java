@@ -41,7 +41,10 @@ public class ViewCardUserHitServiceImpl extends ServiceImpl<ViewCardUserHitMappe
         log.info(String.valueOf(gameid));
 
         QueryWrapper<ViewCardUserHit> gameQueryWrapper = new QueryWrapper<>();
-        if(gameid > 0){
+        if (gameid == -1){
+            gameQueryWrapper.eq("userid", cardUser.getId());
+        }
+        else {
            gameQueryWrapper.eq("gameid", gameid).eq("userid", cardUser.getId());
         }
 

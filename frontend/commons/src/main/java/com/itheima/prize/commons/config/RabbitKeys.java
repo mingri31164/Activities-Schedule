@@ -7,7 +7,4 @@ public class RabbitKeys {
     public static final String QUEUE_PLAY = "prize_queue_play";
     //中奖路由名称
     public final static String EXCHANGE_DIRECT = "prize_exchange_direct";
-
-
-
 }

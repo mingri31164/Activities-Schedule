@@ -81,9 +81,10 @@ public class CardGameServiceImpl extends ServiceImpl<CardGameMapper, CardGame>
     public void listAndSaveAboutToStartGames() {
         log.info("缓存预热");
         LocalDateTime begin = LocalDateTime.now();
-        LocalDateTime end = begin.plusMinutes(1000);
+        LocalDateTime end = begin.plusMinutes(1);
 
         List<CardGame> cardGameList = cardGameMapper.selectAboutToStartGames(begin, end);
+        if (cardGameList.isEmpty()) return;
         for (CardGame game : cardGameList) {
             // 缓存活动基本信息
             redisUtil.set(RedisKeys.INFO + game.getId(), game, -1);
@@ -95,13 +96,13 @@ public class CardGameServiceImpl extends ServiceImpl<CardGameMapper, CardGame>
                 redisUtil.hset(RedisKeys.MAXENTER + game.getId(), r.getUserlevel() + "", r.getEnterTimes());
             }
             // 抽奖令牌桶
-            List<Map<Long, CardProductDto>> tokenList = new ArrayList<>();
+            List<Long> tokenList = new ArrayList<>();
 
             // 查询活动对应的奖品ID和数量
             List<CardProductDto> gameProductList = GameProductService.listGameProductsByGameId(game.getId());
 
             // 在活动时间段内生成随机时间戳做令牌
-            for (CardProductDto product : gameProductList) {
+            for (CardProductDto productDto : gameProductList) {
                 Date gameStartTime = game.getStarttime();
                 Date gameEndTime = game.getEndtime();
 
@@ -117,14 +118,16 @@ public class CardGameServiceImpl extends ServiceImpl<CardGameMapper, CardGame>
                 long rnd = randomStartMillis + new Random().nextInt((int) duration);
                 long token = rnd * 1000 + new Random().nextInt(999);
 
-                // 将时间戳与对应的奖品信息关联
-                Map<Long, CardProductDto> tokenMap = new HashMap<>();
-                tokenMap.put(token, product);
-                tokenList.add(tokenMap);
-            }
+                // 将令牌加入桶中
+                tokenList.add(token);
 
+                long expire = endMillis - System.currentTimeMillis();
+
+                //令牌-奖品映射信息
+                redisUtil.set(RedisKeys.TOKEN+game.getId()+"_"+token,productDto,expire);
+            }
             // 按时间戳从小到大排序
-            tokenList.sort((m1, m2) -> Long.compare(m1.keySet().iterator().next(), m2.keySet().iterator().next()));
+            tokenList.sort(Long::compareTo);
 
             // 将抽奖令牌桶存入 Redis，从右侧入队
             redisUtil.rightPushAll(RedisKeys.TOKENS + game.getId(), tokenList);

@@ -19,6 +19,7 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiImplicitParams;
 import io.swagger.annotations.ApiOperation;
+import lombok.Builder;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.type.TypeReference;
@@ -30,6 +31,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import springfox.documentation.spring.web.json.Json;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
@@ -58,6 +60,7 @@ public class ActController {
     private RabbitTemplate rabbitTemplate;
     @Autowired
     private LuaScript luaScript;
+
 
     @GetMapping("/limits/{gameid}")
     @ApiOperation(value = "剩余次数")
@@ -118,8 +121,91 @@ public class ActController {
             @ApiImplicitParam(name="gameid",value = "活动id",example = "1",required = true)
     })
     public ApiResult<Object> act(@PathVariable int gameid, HttpServletRequest request){
-        //TODO
-        return null;
+        log.info("当前时间");
+        log.info(String.valueOf(new Date().getTime()));
+        Date now = new Date();
+
+        CardUser user = (CardUser) request.getSession().getAttribute("user");
+        if (user == null){
+            return new ApiResult(-1,"未登陆",null);
+        }
+        CardGame gameInfo = (CardGame) redisUtil.get(RedisKeys.INFO+gameid);
+        if (gameInfo == null){
+            return new ApiResult(-1,"活动未开始",null);
+        }
+        Long endTime = gameInfo.getEndtime().getTime();
+        Long curTime = now.getTime();
+        Long expire = endTime-curTime;
+
+        //活动最大中奖次数
+        Integer gameMaxGoal = (Integer) redisUtil.hget(RedisKeys.MAXGOAL+gameid,user.getLevel()+"");
+        if (!redisUtil.hHasKey(RedisKeys.MAXGOAL+gameid,user.getLevel()+"")){
+           gameMaxGoal = Integer.MAX_VALUE;
+        }
+
+        //活动最大可抽奖次数
+        Integer gameMaxEnter = (Integer) redisUtil.hget(RedisKeys.MAXENTER+gameid,user.getLevel()+"");
+        if (!redisUtil.hHasKey(RedisKeys.MAXENTER + gameid, user.getLevel() + "")) {
+            gameMaxEnter = Integer.MAX_VALUE;
+        }
+
+        //用户已抽奖次数
+        if (!redisUtil.hasKey(RedisKeys.USERENTER+gameid+"_"+user.getId())){
+            redisUtil.set(RedisKeys.USERENTER+gameid+"_"+user.getId(),0,expire);
+        }
+        Integer userEnterTimes = (Integer) redisUtil.get(RedisKeys.USERENTER+gameid+"_"+user.getId());
+
+        //用户已中奖次数
+        if (!redisUtil.hasKey(RedisKeys.USERHIT+gameid+"_"+user.getId())){
+            redisUtil.set(RedisKeys.USERHIT+gameid+"_"+user.getId(),0,expire);
+        }
+        Integer userGoalTimes = (Integer) redisUtil.get(RedisKeys.USERHIT+gameid+"_"+user.getId());
+
+        if (now.before(gameInfo.getStarttime())) {
+            return new ApiResult(-1,"活动未开始",null);
+        }
+        else if (now.after(gameInfo.getEndtime())){
+            return new ApiResult(-1,"活动已结束",null);
+        }
+
+        if (userEnterTimes >= gameMaxEnter){
+            return new ApiResult(-1,"您的抽奖次数已用完",null);
+        }
+
+        if (userGoalTimes >= gameMaxGoal){
+            return new ApiResult(-1,"您已达最大中奖数",null);
+        }
+
+        //已抽奖次数-1
+        redisUtil.incr(RedisKeys.USERENTER+gameid+"_"+user.getId(),1);
+
+        Long result = luaScript.tokenCheck(RedisKeys.TOKENS+gameid,now.getTime()+"");
+        if (result == 1){
+            return new ApiResult(0,"奖品已抽光！",null);
+        }
+        else if (result == 0){
+            return new ApiResult(0,"未中奖",null);
+        }
+
+        //中奖
+        redisUtil.incr(RedisKeys.USERHIT+gameid+"_"+user.getId(),1);
+        CardProductDto cardProductDto = (CardProductDto) redisUtil.get(RedisKeys.TOKEN+gameid+"_"+result);
+        //用户中奖后的信息及中的奖品通过该队列投放
+        CardUserHit cardUserHit = new CardUserHit();
+        cardUserHit.setUserid(user.getId());
+        cardUserHit.setGameid(gameid);
+        cardUserHit.setProductid(cardProductDto.getId());
+        cardUserHit.setHittime(new Date());
+        rabbitTemplate.convertAndSend(RabbitKeys.EXCHANGE_DIRECT,RabbitKeys.QUEUE_HIT, JSON.toJSONString(cardUserHit));
+
+        //用户参加的活动通过该队列投放
+        CardUserGame cardUserGame = new CardUserGame();
+        cardUserGame.setUserid(user.getId());
+        cardUserGame.setGameid(gameid);
+        cardUserGame.setCreatetime(new Date());
+        rabbitTemplate.convertAndSend(RabbitKeys.EXCHANGE_DIRECT,RabbitKeys.QUEUE_PLAY,JSON.toJSONString(cardUserGame));
+
+        return new ApiResult<>(1,"恭喜中奖",cardProductDto);
     }
 
     @GetMapping("/info/{gameid}")
@@ -152,16 +238,11 @@ public class ActController {
             maxEnters.put(r.getUserlevel()+"",maxenter);
         }
 
+        List<Long> tokenList = redisTemplate.opsForList().range(RedisKeys.TOKENS+gameid,0,-1);
 
-        String type = String.valueOf(redisTemplate.type(tokenKey));
-        log.info("键的类型为：",type);
-
-        List<Map<String,CardProductDto>> result = redisTemplate.opsForList().range(tokenKey,0,-1);
-        for (Map<String, CardProductDto> product : result){
-            for (String timestamp : product.keySet()) { // 获取所有时间戳
-                CardProductDto cardProduct = product.get(timestamp); // 根据时间戳获取对应的 CardProductDto
+            for (Long token : tokenList) { // 获取所有时间戳
                 //还原真实时间戳
-                long realTimeStamp = Long.parseLong(timestamp)/1000;
+                long realTimeStamp = token/1000;
                 // 将时间戳转换为可读的日期时间格式
                 Date randomDate = new Date(realTimeStamp);
 
@@ -171,10 +252,11 @@ public class ActController {
                // 将 Date 对象格式化为可读的日期时间字符串
                 String formattedDate = sdf.format(randomDate);
 
+                CardProductDto productDto = (CardProductDto) redisUtil.get(RedisKeys.TOKEN+gameid+"_"+token);
+
                 // 如果需要将 product 的所有内容放入 productMap
-                productMap.put(formattedDate, cardProduct);
+                productMap.put(formattedDate, productDto);
             }
-        }
 
         map.put(RedisKeys.INFO+gameid,game);
         map.put(RedisKeys.TOKENS+gameid,productMap);

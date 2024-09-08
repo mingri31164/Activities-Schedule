@@ -20,7 +20,7 @@ public interface CardGameMapper extends BaseMapper<CardGame> {
      *
      * @return
      */
-    @Select("select * from card_game where status=0 and starttime>#{begin} and starttime<=#{end}")
+    @Select("select * from card_game where starttime>#{begin} and starttime<=#{end}")
     List<CardGame> selectAboutToStartGames(LocalDateTime begin, LocalDateTime end);
 }
 

@@ -14,8 +14,8 @@
           <input :type="eyeFlag ? 'text' : 'password'" placeholder="请输入密码" v-model="loginForm.password">
           <i class="icon-eye" :class="{open: eyeFlag}" @click="eyeFlag = !eyeFlag"></i>
         </div>
-        <div 
-          class="submit" 
+        <div
+          class="submit"
           :class="{pass: loginForm.userName && loginForm.password}"
           @click="loginFun"
         >登录</div>
@@ -38,8 +38,8 @@ import { Toast } from 'vant';
 })
 export default class Login extends Vue {
   loginForm: any = {
-    userName: 'bxg',
-    password: 'bxg123'
+    userName: 'LDB',
+    password: '123456'
   }
   eyeFlag = false
   // 登录事件
@@ -63,7 +63,7 @@ export default class Login extends Vue {
           if (res.data.code === 1) {
             // 登录成功，返回上一页
             this.GoBackFun()
-          } else { 
+          } else {
             // 登录失败，错误提示
             Toast(res.data.msg);
           }
@@ -103,7 +103,7 @@ export default class Login extends Vue {
     img{
       position: absolute;
       -webkit-touch-callout: none;
-      -webkit-user-select: none; 
+      -webkit-user-select: none;
       -moz-user-select: none;
       -ms-user-select: none;
       user-select: none;
@@ -147,7 +147,7 @@ export default class Login extends Vue {
       border: 2px solid #F9F9F9;
       padding: 26px 48px;
       box-sizing: border-box;
-      margin-bottom: 32px; 
+      margin-bottom: 32px;
       input{
         width: 400px;
         height: 44px;
@@ -200,7 +200,7 @@ export default class Login extends Vue {
 
     p{
       position: absolute;
-      bottom: 32px; 
+      bottom: 32px;
       left: 0;
       width: 100%;
       text-align: center;
