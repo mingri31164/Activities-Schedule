@@ -61,6 +61,8 @@ public class ActController {
     @Autowired
     private LuaScript luaScript;
 
+    static int defaultMaxEnterTime = 10;
+    static int defaultMaxGoalTime = 20;
 
     @GetMapping("/limits/{gameid}")
     @ApiOperation(value = "剩余次数")
@@ -130,36 +132,47 @@ public class ActController {
             return new ApiResult(-1,"未登陆",null);
         }
         CardGame gameInfo = (CardGame) redisUtil.get(RedisKeys.INFO+gameid);
-        if (gameInfo == null){
+        if (gameInfo == null || now.before(gameInfo.getStarttime())){
             return new ApiResult(-1,"活动未开始",null);
         }
-        Long endTime = gameInfo.getEndtime().getTime();
-        Long curTime = now.getTime();
-        Long expire = endTime-curTime;
-
-        //活动最大中奖次数
-        Integer gameMaxGoal = (Integer) redisUtil.hget(RedisKeys.MAXGOAL+gameid,user.getLevel()+"");
-        if (!redisUtil.hHasKey(RedisKeys.MAXGOAL+gameid,user.getLevel()+"")){
-           gameMaxGoal = Integer.MAX_VALUE;
+        if (now.after(gameInfo.getEndtime())){
+            return new ApiResult(-1,"活动已结束",null);
         }
 
+        //key值过期时间
+        Long expire = gameInfo.getEndtime().getTime()-now.getTime();
+
+        //判断用户已抽奖次数
         //活动最大可抽奖次数
         Integer gameMaxEnter = (Integer) redisUtil.hget(RedisKeys.MAXENTER+gameid,user.getLevel()+"");
-        if (!redisUtil.hHasKey(RedisKeys.MAXENTER + gameid, user.getLevel() + "")) {
-            gameMaxEnter = Integer.MAX_VALUE;
-        }
+        if(gameMaxEnter == null) gameMaxEnter = defaultMaxEnterTime;
 
-        //用户已抽奖次数
-        if (!redisUtil.hasKey(RedisKeys.USERENTER+gameid+"_"+user.getId())){
-            redisUtil.set(RedisKeys.USERENTER+gameid+"_"+user.getId(),0,expire);
+        Integer userEnterTime = (Integer) redisUtil.get(RedisKeys.USERENTER + gameid + "_" + user.getId());
+        if (null == userEnterTime){
+            redisUtil.set(RedisKeys.USERENTER+gameid+"_"+user.getId(),1,expire);
+            //用户参加的活动通过该队列投放
+            CardUserGame cardUserGame = new CardUserGame();
+            cardUserGame.setUserid(user.getId());
+            cardUserGame.setGameid(gameid);
+            cardUserGame.setCreatetime(new Date());
+            rabbitTemplate.convertAndSend(RabbitKeys.QUEUE_PLAY,JSON.toJSONString(cardUserGame));
         }
-        Integer userEnterTimes = (Integer) redisUtil.get(RedisKeys.USERENTER+gameid+"_"+user.getId());
+        else if (userEnterTime >= gameMaxEnter){
+            return new ApiResult(-1,"您的抽奖次数已用完",null);
+        }
+        //已抽奖次数+1
+        redisUtil.incr(RedisKeys.USERENTER+gameid+"_"+user.getId(),1);
 
-        //用户已中奖次数
+
+        //判断用户已中奖次数
+        //活动最大中奖次数
+        Integer gameMaxGoal = (Integer) redisUtil.hget(RedisKeys.MAXGOAL+gameid,user.getLevel()+"");
+        if (gameMaxGoal == null) gameMaxGoal = defaultMaxGoalTime;
+
+        Integer userGoalTimes = (Integer) redisUtil.get(RedisKeys.USERHIT+gameid+"_"+user.getId());
         if (!redisUtil.hasKey(RedisKeys.USERHIT+gameid+"_"+user.getId())){
             redisUtil.set(RedisKeys.USERHIT+gameid+"_"+user.getId(),0,expire);
         }
-        Integer userGoalTimes = (Integer) redisUtil.get(RedisKeys.USERHIT+gameid+"_"+user.getId());
 
         if (now.before(gameInfo.getStarttime())) {
             return new ApiResult(-1,"活动未开始",null);
@@ -168,16 +181,13 @@ public class ActController {
             return new ApiResult(-1,"活动已结束",null);
         }
 
-        if (userEnterTimes >= gameMaxEnter){
+        if (userGoalTimes >= gameMaxEnter){
             return new ApiResult(-1,"您的抽奖次数已用完",null);
         }
 
         if (userGoalTimes >= gameMaxGoal){
             return new ApiResult(-1,"您已达最大中奖数",null);
         }
-
-        //已抽奖次数-1
-        redisUtil.incr(RedisKeys.USERENTER+gameid+"_"+user.getId(),1);
 
         Long result = luaScript.tokenCheck(RedisKeys.TOKENS+gameid,now.getTime()+"");
         if (result == 1){
@@ -186,30 +196,25 @@ public class ActController {
         else if (result == 0){
             return new ApiResult(0,"未中奖",null);
         }
+        else {
+            //中奖
+            redisUtil.incr(RedisKeys.USERHIT + gameid + "_" + user.getId(), 1);
+            //用户中奖后的信息及中的奖品通过该队列投放
+            String cardProductKey = RedisKeys.TOKEN + gameid + "_" + result;
+            CardProductDto cardProductDto = (CardProductDto) redisUtil.get(cardProductKey);
+            CardUserHit cardUserHit = new CardUserHit();
+            cardUserHit.setUserid(user.getId());
+            cardUserHit.setGameid(gameid);
+            cardUserHit.setProductid(cardProductDto.getId());
+            cardUserHit.setHittime(new Date());
+            rabbitTemplate.convertAndSend(RabbitKeys.QUEUE_HIT, JSON.toJSONString(cardUserHit));
 
-        //中奖
-        redisUtil.incr(RedisKeys.USERHIT+gameid+"_"+user.getId(),1);
-        CardProductDto cardProductDto = (CardProductDto) redisUtil.get(RedisKeys.TOKEN+gameid+"_"+result);
-        //用户中奖后的信息及中的奖品通过该队列投放
-        CardUserHit cardUserHit = new CardUserHit();
-        cardUserHit.setUserid(user.getId());
-        cardUserHit.setGameid(gameid);
-        cardUserHit.setProductid(cardProductDto.getId());
-        cardUserHit.setHittime(new Date());
-        rabbitTemplate.convertAndSend(RabbitKeys.EXCHANGE_DIRECT,RabbitKeys.QUEUE_HIT, JSON.toJSONString(cardUserHit));
-
-        //用户参加的活动通过该队列投放
-        CardUserGame cardUserGame = new CardUserGame();
-        cardUserGame.setUserid(user.getId());
-        cardUserGame.setGameid(gameid);
-        cardUserGame.setCreatetime(new Date());
-        rabbitTemplate.convertAndSend(RabbitKeys.EXCHANGE_DIRECT,RabbitKeys.QUEUE_PLAY,JSON.toJSONString(cardUserGame));
-
-        return new ApiResult<>(1,"恭喜中奖",cardProductDto);
+            return new ApiResult<>(1, "恭喜中奖", cardProductDto);
+        }
     }
 
     @GetMapping("/info/{gameid}")
-    @ApiOperation(value = "缓存信息")
+    @ApiOperation(value = "查询缓存信息")
     @ApiImplicitParams({
             @ApiImplicitParam(name="gameid",value = "活动id",example = "1",required = true)
     })
@@ -240,7 +245,7 @@ public class ActController {
 
         List<Long> tokenList = redisTemplate.opsForList().range(RedisKeys.TOKENS+gameid,0,-1);
 
-            for (Long token : tokenList) { // 获取所有时间戳
+            for (Long token : tokenList) { //遍历所有时间戳
                 //还原真实时间戳
                 long realTimeStamp = token/1000;
                 // 将时间戳转换为可读的日期时间格式

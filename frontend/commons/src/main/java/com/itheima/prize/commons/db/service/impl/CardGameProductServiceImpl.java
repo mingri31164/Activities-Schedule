@@ -32,8 +32,7 @@ public class CardGameProductServiceImpl extends ServiceImpl<CardGameProductMappe
     public List<CardProductDto> listGameProductsByGameId(int gameid) {
 
         // 查询活动对应的奖品 ID 和数量
-        List<CardGameProduct> gameProducts = lambdaQuery()
-                .eq(CardGameProduct::getGameid, gameid).list();
+        List<CardGameProduct> gameProducts = query().eq("gameid", gameid).list();
 
         List<CardProductDto> productDtos = new ArrayList<>();
 

@@ -30,7 +30,6 @@ public class CardUserServiceImpl extends ServiceImpl<CardUserMapper, CardUser>
 
     /**
      * 用户登录
-     *
      * @param request
      * @param account
      * @param password
@@ -47,7 +46,7 @@ public class CardUserServiceImpl extends ServiceImpl<CardUserMapper, CardUser>
             return new ApiResult(0, MessageConstant.LOGIN_LOCKED, null);
         }
         //2、根据用户名查询数据库中的数据
-        CardUser user = getOne(new QueryWrapper<CardUser>().eq("uname", account));
+        CardUser user = query().eq("uname", account).one();
 
         //对前端传过来的明文密码进行md5加密处理
         String hashedPassword = PasswordUtil.md5(password);

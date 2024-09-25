@@ -20,8 +20,4 @@ public interface CardGameService extends IService<CardGame> {
      */
     PageBean<CardGame> pageGame(int status, int curpage, int limit);
 
-    /**
-     * 缓存预热
-     */
-    void listAndSaveAboutToStartGames();
 }

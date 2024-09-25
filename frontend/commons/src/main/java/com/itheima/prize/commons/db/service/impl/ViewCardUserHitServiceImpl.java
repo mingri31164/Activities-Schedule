@@ -28,7 +28,6 @@ public class ViewCardUserHitServiceImpl extends ServiceImpl<ViewCardUserHitMappe
 
     /**
      * 分页查询用户奖品信息
-     *
      * @param gameid
      * @param curpage
      * @param limit

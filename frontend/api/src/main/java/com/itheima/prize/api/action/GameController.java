@@ -67,12 +67,11 @@ public class GameController {
             @ApiImplicitParam(name="gameid",value = "活动id",example = "1",required = true)
     })
     public ApiResult<List<CardProductDto>> products(@PathVariable int gameid) {
-        List<CardProductDto> gameProductList = GameProductService.listGameProductsByGameId(gameid);
-
+//      List<CardProductDto> gameProductList = GameProductService.listGameProductsByGameId(gameid);
+        List<CardProductDto> gameProductList = loadService.getByGameId(gameid);
         if (gameProductList.isEmpty()) {
             return new ApiResult<>(0, "该活动没有相关奖品", null);
         }
-
         return new ApiResult<>(1, "成功", gameProductList);
     }
 
@@ -87,6 +86,4 @@ public class GameController {
         PageBean<ViewCardUserHit> pageBean = viewCardUserHitService.pageUserHit(gameid,curpage,limit);
         return new ApiResult<>(1,"成功",pageBean);
     }
-
-
 }

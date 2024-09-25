@@ -23,8 +23,11 @@ public class PrizeGameReceiver {
 
     @RabbitHandler
     public void processMessage(String message) {
+        //从消息队列中获取用户活动信息
         logger.info("user play : msg={}" , message);
+        //反序列化为CardUserGame对象
         CardUserGame cardUserGame = JSON.parseObject(message, CardUserGame.class);
+        //将用户活动信息保存到数据库中
         cardUserGameService.save(cardUserGame);
     }
 
