@@ -7,7 +7,9 @@ import com.itheima.prize.commons.utils.RedisUtil;
 import com.ruoyi.lottery.domain.CardGame;
 import com.ruoyi.lottery.domain.filter.LotteryActDTO;
 import cn.hutool.core.util.StrUtil;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.Date;
@@ -15,6 +17,8 @@ import java.util.Date;
 /**
  * 抽奖流程过滤器之验证参数必填
  */
+@Component
+@RequiredArgsConstructor
 public class LotteryActParamNotNullChainHandler implements LotteryActChainFilter<LotteryActDTO>{
 
     @Override

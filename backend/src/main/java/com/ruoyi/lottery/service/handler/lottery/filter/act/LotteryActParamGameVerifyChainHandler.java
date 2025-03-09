@@ -6,7 +6,9 @@ import com.itheima.prize.commons.db.entity.CardUser;
 import com.itheima.prize.commons.utils.ApiResult;
 import com.itheima.prize.commons.utils.RedisUtil;
 import com.ruoyi.lottery.domain.filter.LotteryActDTO;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import java.util.Date;
 
@@ -16,6 +18,8 @@ import static com.ruoyi.common.constant.LotteryConstants.defaultMaxGoalTime;
 /**
  * 抽奖流程过滤器之活动数据验证
  */
+@Component
+@RequiredArgsConstructor
 public class LotteryActParamGameVerifyChainHandler implements LotteryActChainFilter<LotteryActDTO>{
 
     @Autowired
