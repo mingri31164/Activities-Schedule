@@ -8,6 +8,7 @@ import com.itheima.prize.commons.db.entity.*;
 import com.itheima.prize.commons.db.service.CardGameRulesService;
 import com.itheima.prize.commons.utils.ApiResult;
 import com.itheima.prize.commons.utils.RedisUtil;
+import com.ruoyi.common.annotation.ILog;
 import com.ruoyi.common.enums.LotteryChainMarkEnum;
 import com.ruoyi.framework.designpattern.chain.AbstractChainContext;
 import io.swagger.annotations.Api;
@@ -50,6 +51,7 @@ public class ActController {
     private final AbstractChainContext<LotteryActDTO> lotteryActAbstractChainContext;
 
 
+    @ILog
     @GetMapping("/go/{gameid}")
     @ApiOperation(value = "抽奖")
     @ApiImplicitParams({
@@ -101,6 +103,7 @@ public class ActController {
     }
 
 
+    @ILog
     @GetMapping("/info/{gameid}")
     @ApiOperation(value = "查询缓存信息")
     @ApiImplicitParams({

@@ -38,6 +38,7 @@ public class GameTask {
     @Autowired
     private RedisUtil redisUtil;
 
+
     @Scheduled(cron = "0 * * * * ?")
     public void execute() {
         System.out.printf("scheduled!"+new Date());

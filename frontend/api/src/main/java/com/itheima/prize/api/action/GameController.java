@@ -10,6 +10,7 @@ import com.itheima.prize.commons.db.mapper.ViewCardUserHitMapper;
 import com.itheima.prize.commons.db.service.*;
 import com.itheima.prize.commons.utils.ApiResult;
 import com.itheima.prize.commons.utils.PageBean;
+import com.ruoyi.common.annotation.ILog;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiImplicitParams;
@@ -39,6 +40,7 @@ public class GameController {
     private ViewCardUserHitService viewCardUserHitService;
 
 
+    @ILog
     @GetMapping("/list/{status}/{curpage}/{limit}")
     @ApiOperation(value = "活动列表")
     @ApiImplicitParams({
@@ -51,6 +53,7 @@ public class GameController {
         return new ApiResult(1,"成功",pageBean);
     }
 
+    @ILog
     @GetMapping("/info/{gameid}")
     @ApiOperation(value = "活动信息")
     @ApiImplicitParams({
