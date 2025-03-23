@@ -17,19 +17,19 @@ import java.util.concurrent.TimeUnit;
 /**
  * 基于ip + 请求方法 的限流切面
  */
-@Aspect
+//@Aspect
 @Slf4j
-@RestController
+//@RestController
 public class IpLimiterAspect {
 
-    private volatile double DEFAULT_LIMITER_COUNT_PER_SECOND = 0.5;
+    private volatile double DEFAULT_LIMITER_COUNT_PER_SECOND = 2;
 
     Cache<String, RateLimiter> limiterCache = CacheBuilder.newBuilder().expireAfterAccess(10, TimeUnit.MINUTES).build();
 
     @Autowired
     private HttpServletRequest request;
 
-    @Around("execution(* com.mingri.prize.api.action.*.*(..))")
+//    @Around("execution(* com.mingri.prize.api.action.*.*(..))")
     public Object around(ProceedingJoinPoint joinPoint) throws Throwable {
         String ip = request.getHeader("X-Real-IP");
 

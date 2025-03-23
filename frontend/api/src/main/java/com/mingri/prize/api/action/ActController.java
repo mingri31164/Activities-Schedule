@@ -2,6 +2,7 @@ package com.mingri.prize.api.action;
 
 import com.alibaba.fastjson.JSON;
 import com.mingri.prize.api.config.LuaScript;
+import com.mingri.prize.commons.annotition.SlideLimiter;
 import com.mingri.prize.commons.config.RabbitKeys;
 import com.mingri.prize.commons.config.RedisKeys;
 import com.mingri.prize.commons.db.entity.*;
@@ -102,8 +103,12 @@ public class ActController {
 
 
 
-
-
+    @SlideLimiter(
+            key = "lottery:ip:",
+            window = 60,
+            limit = 100,
+            dimension = "#request.remoteAddr"
+    )
     @GetMapping("/go/{gameid}")
     @ApiOperation(value = "抽奖")
     @ApiImplicitParams({
