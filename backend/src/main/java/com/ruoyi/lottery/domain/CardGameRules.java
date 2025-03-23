@@ -7,9 +7,6 @@ import com.ruoyi.common.core.domain.BaseEntity;
 
 /**
  * 活动策略对象 card_game_rules
- * 
- * @author Shawn
- * @date 2023-12-28
  */
 public class CardGameRules extends BaseEntity
 {

@@ -10,9 +10,6 @@ import com.ruoyi.common.core.text.Convert;
 
 /**
  * 奖品管理Service业务层处理
- * 
- * @author Shawn
- * @date 2023-12-28
  */
 @Service
 public class CardProductServiceImpl implements ICardProductService 

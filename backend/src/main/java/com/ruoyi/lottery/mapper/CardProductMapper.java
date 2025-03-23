@@ -5,9 +5,6 @@ import com.ruoyi.lottery.domain.CardProduct;
 
 /**
  * 奖品管理Mapper接口
- * 
- * @author Shawn
- * @date 2023-12-28
  */
 public interface CardProductMapper 
 {

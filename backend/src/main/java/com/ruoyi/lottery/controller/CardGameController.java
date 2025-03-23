@@ -21,9 +21,6 @@ import com.ruoyi.common.core.page.TableDataInfo;
 
 /**
  * 活动管理Controller
- * 
- * @author Shawn
- * @date 2023-12-28
  */
 @Controller
 @RequestMapping("/lottery/game")

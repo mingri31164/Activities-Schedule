@@ -10,9 +10,6 @@ import com.ruoyi.common.core.domain.BaseEntity;
 
 /**
  * 活动管理对象 card_game
- * 
- * @author Shawn
- * @date 2023-12-28
  */
 public class CardGame extends BaseEntity
 {

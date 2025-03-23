@@ -5,9 +5,6 @@ import com.ruoyi.lottery.domain.CardGame;
 
 /**
  * 活动管理Service接口
- * 
- * @author Shawn
- * @date 2023-12-28
  */
 public interface ICardGameService 
 {

@@ -10,19 +10,19 @@ import com.ruoyi.common.core.text.Convert;
 
 /**
  * 活动策略Service业务层处理
- * 
+ *
  * @author Shawn
  * @date 2023-12-29
  */
 @Service
-public class CardGameRulesServiceImpl implements ICardGameRulesService 
+public class CardGameRulesServiceImpl implements ICardGameRulesService
 {
     @Autowired
     private CardGameRulesMapper cardGameRulesMapper;
 
     /**
      * 查询活动策略
-     * 
+     *
      * @param id 活动策略主键
      * @return 活动策略
      */
@@ -34,7 +34,7 @@ public class CardGameRulesServiceImpl implements ICardGameRulesService
 
     /**
      * 查询活动策略列表
-     * 
+     *
      * @param cardGameRules 活动策略
      * @return 活动策略
      */
@@ -46,7 +46,7 @@ public class CardGameRulesServiceImpl implements ICardGameRulesService
 
     /**
      * 新增活动策略
-     * 
+     *
      * @param cardGameRules 活动策略
      * @return 结果
      */
@@ -58,7 +58,7 @@ public class CardGameRulesServiceImpl implements ICardGameRulesService
 
     /**
      * 修改活动策略
-     * 
+     *
      * @param cardGameRules 活动策略
      * @return 结果
      */
@@ -70,7 +70,7 @@ public class CardGameRulesServiceImpl implements ICardGameRulesService
 
     /**
      * 批量删除活动策略
-     * 
+     *
      * @param ids 需要删除的活动策略主键
      * @return 结果
      */
@@ -82,7 +82,7 @@ public class CardGameRulesServiceImpl implements ICardGameRulesService
 
     /**
      * 删除活动策略信息
-     * 
+     *
      * @param id 活动策略主键
      * @return 结果
      */

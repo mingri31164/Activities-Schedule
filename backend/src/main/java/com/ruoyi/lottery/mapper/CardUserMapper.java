@@ -5,15 +5,15 @@ import com.ruoyi.lottery.domain.CardUser;
 
 /**
  * 会员信息Mapper接口
- * 
+ *
  * @author Shawn
  * @date 2023-12-29
  */
-public interface CardUserMapper 
+public interface CardUserMapper
 {
     /**
      * 查询会员信息
-     * 
+     *
      * @param id 会员信息主键
      * @return 会员信息
      */
@@ -21,7 +21,7 @@ public interface CardUserMapper
 
     /**
      * 查询会员信息列表
-     * 
+     *
      * @param cardUser 会员信息
      * @return 会员信息集合
      */
@@ -29,7 +29,7 @@ public interface CardUserMapper
 
     /**
      * 新增会员信息
-     * 
+     *
      * @param cardUser 会员信息
      * @return 结果
      */
@@ -37,7 +37,7 @@ public interface CardUserMapper
 
     /**
      * 修改会员信息
-     * 
+     *
      * @param cardUser 会员信息
      * @return 结果
      */
@@ -45,7 +45,7 @@ public interface CardUserMapper
 
     /**
      * 删除会员信息
-     * 
+     *
      * @param id 会员信息主键
      * @return 结果
      */
@@ -53,7 +53,7 @@ public interface CardUserMapper
 
     /**
      * 批量删除会员信息
-     * 
+     *
      * @param ids 需要删除的数据主键集合
      * @return 结果
      */

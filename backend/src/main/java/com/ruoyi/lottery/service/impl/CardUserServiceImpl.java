@@ -10,19 +10,19 @@ import com.ruoyi.common.core.text.Convert;
 
 /**
  * 会员信息Service业务层处理
- * 
+ *
  * @author Shawn
  * @date 2023-12-29
  */
 @Service
-public class CardUserServiceImpl implements ICardUserService 
+public class CardUserServiceImpl implements ICardUserService
 {
     @Autowired
     private CardUserMapper cardUserMapper;
 
     /**
      * 查询会员信息
-     * 
+     *
      * @param id 会员信息主键
      * @return 会员信息
      */
@@ -34,7 +34,7 @@ public class CardUserServiceImpl implements ICardUserService
 
     /**
      * 查询会员信息列表
-     * 
+     *
      * @param cardUser 会员信息
      * @return 会员信息
      */
@@ -46,7 +46,7 @@ public class CardUserServiceImpl implements ICardUserService
 
     /**
      * 新增会员信息
-     * 
+     *
      * @param cardUser 会员信息
      * @return 结果
      */
@@ -58,7 +58,7 @@ public class CardUserServiceImpl implements ICardUserService
 
     /**
      * 修改会员信息
-     * 
+     *
      * @param cardUser 会员信息
      * @return 结果
      */
@@ -70,7 +70,7 @@ public class CardUserServiceImpl implements ICardUserService
 
     /**
      * 批量删除会员信息
-     * 
+     *
      * @param ids 需要删除的会员信息主键
      * @return 结果
      */
@@ -82,7 +82,7 @@ public class CardUserServiceImpl implements ICardUserService
 
     /**
      * 删除会员信息信息
-     * 
+     *
      * @param id 会员信息主键
      * @return 结果
      */

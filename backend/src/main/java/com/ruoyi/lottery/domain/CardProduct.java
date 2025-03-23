@@ -8,9 +8,6 @@ import com.ruoyi.common.core.domain.BaseEntity;
 
 /**
  * 奖品管理对象 card_product
- * 
- * @author Shawn
- * @date 2023-12-28
  */
 public class CardProduct extends BaseEntity
 {

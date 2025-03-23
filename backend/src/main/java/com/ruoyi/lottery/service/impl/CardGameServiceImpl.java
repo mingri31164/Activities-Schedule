@@ -16,9 +16,6 @@ import com.ruoyi.common.core.text.Convert;
 
 /**
  * 活动管理Service业务层处理
- * 
- * @author Shawn
- * @date 2023-12-28
  */
 @Service
 public class CardGameServiceImpl implements ICardGameService 

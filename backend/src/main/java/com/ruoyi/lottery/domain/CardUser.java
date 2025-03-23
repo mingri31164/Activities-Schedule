@@ -9,7 +9,7 @@ import java.util.Date;
 
 /**
  * 会员信息对象 card_user
- * 
+ *
  * @author Shawn
  * @date 2023-12-29
  */
@@ -73,70 +73,70 @@ public class CardUser extends BaseEntity
         this.id = id;
     }
 
-    public Long getId() 
+    public Long getId()
     {
         return id;
     }
-    public void setUname(String uname) 
+    public void setUname(String uname)
     {
         this.uname = uname;
     }
 
-    public String getUname() 
+    public String getUname()
     {
         return uname;
     }
-    public void setPic(String pic) 
+    public void setPic(String pic)
     {
         this.pic = pic;
     }
 
-    public String getPic() 
+    public String getPic()
     {
         return pic;
     }
-    public void setPasswd(String passwd) 
+    public void setPasswd(String passwd)
     {
         this.passwd = passwd;
     }
 
-    public String getPasswd() 
+    public String getPasswd()
     {
         return passwd;
     }
-    public void setRealname(String realname) 
+    public void setRealname(String realname)
     {
         this.realname = realname;
     }
 
-    public String getRealname() 
+    public String getRealname()
     {
         return realname;
     }
-    public void setIdcard(String idcard) 
+    public void setIdcard(String idcard)
     {
         this.idcard = idcard;
     }
 
-    public String getIdcard() 
+    public String getIdcard()
     {
         return idcard;
     }
-    public void setPhone(String phone) 
+    public void setPhone(String phone)
     {
         this.phone = phone;
     }
 
-    public String getPhone() 
+    public String getPhone()
     {
         return phone;
     }
-    public void setLevel(Integer level) 
+    public void setLevel(Integer level)
     {
         this.level = level;
     }
 
-    public Integer getLevel() 
+    public Integer getLevel()
     {
         return level;
     }

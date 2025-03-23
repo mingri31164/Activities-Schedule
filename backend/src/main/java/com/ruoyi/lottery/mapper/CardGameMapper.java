@@ -7,9 +7,6 @@ import com.ruoyi.lottery.domain.CardGameRules;
 
 /**
  * 活动管理Mapper接口
- * 
- * @author Shawn
- * @date 2023-12-28
  */
 public interface CardGameMapper 
 {
