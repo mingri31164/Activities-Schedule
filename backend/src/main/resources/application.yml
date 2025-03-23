@@ -20,7 +20,7 @@ ruoyi:
 #所以要保障其可访问性，尤其是docker部署的时候，应该是宿主机暴露的端口！
 minio:
   url: http://xxx:9000
-  host: xxx
+  host:
   port: 9000
   bucket: prize
   username:
