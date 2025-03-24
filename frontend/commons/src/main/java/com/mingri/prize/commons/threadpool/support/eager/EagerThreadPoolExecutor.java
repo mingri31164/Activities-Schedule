@@ -94,7 +94,7 @@ public class EagerThreadPoolExecutor extends ThreadPoolExecutor {
      * 快速消费线程池测试
      **/
     public static void main(String[] args) {
-        ThreadPoolExecutor.AbortPolicy abortPolicy = new ThreadPoolExecutor.AbortPolicy();
+        AbortPolicy abortPolicy = new AbortPolicy();
         TaskQueue taskQueue = new TaskQueue<>(1);
         EagerThreadPoolExecutor eagerThreadPoolExecutor =
                 new EagerThreadPoolExecutor(1, 3,

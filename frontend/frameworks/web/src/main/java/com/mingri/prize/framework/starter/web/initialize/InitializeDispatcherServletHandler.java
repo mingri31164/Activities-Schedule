@@ -1,13 +1,14 @@
-package com.mingri.prize.commons.initialize;
+package com.mingri.prize.framework.starter.web.initialize;
 
-import org.springframework.http.HttpMethod;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.core.env.ConfigurableEnvironment;
+import org.springframework.http.HttpMethod;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.servlet.DispatcherServlet;
 
-import static com.mingri.prize.commons.constant.WebConstant.INITIALIZE_PATH;
+import static com.mingri.prize.framework.starter.web.config.WebAutoConfiguration.INITIALIZE_PATH;
+
 
 /**
  * 通过 {@link InitializeDispatcherServletController} 初始化 {@link DispatcherServlet}

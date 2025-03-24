@@ -1,7 +1,7 @@
 package com.mingri.prize.commons.threadpool.build;
 
 import com.baomidou.mybatisplus.core.toolkit.Assert;
-import com.mingri.prize.commons.annotition.Builder;
+import com.mingri.prize.framework.starter.designpattern.builder.Builder;
 
 import java.math.BigDecimal;
 import java.util.concurrent.*;

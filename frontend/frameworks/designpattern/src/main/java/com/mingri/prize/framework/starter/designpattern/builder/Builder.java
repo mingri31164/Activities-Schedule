@@ -1,4 +1,4 @@
-package com.mingri.prize.commons.annotition;
+package com.mingri.prize.framework.starter.designpattern.builder;
 
 import java.io.Serializable;
 

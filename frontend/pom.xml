@@ -17,6 +17,7 @@
         <module>api</module>
         <module>msg</module>
         <module>commons</module>
+        <module>frameworks</module>
     </modules>
 
     <properties>

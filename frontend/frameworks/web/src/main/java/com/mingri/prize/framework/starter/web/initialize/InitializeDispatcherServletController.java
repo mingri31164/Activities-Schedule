@@ -1,10 +1,10 @@
-package com.mingri.prize.commons.initialize;
+package com.mingri.prize.framework.starter.web.initialize;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import static com.mingri.prize.commons.constant.WebConstant.INITIALIZE_PATH;
+import static com.mingri.prize.framework.starter.web.config.WebAutoConfiguration.INITIALIZE_PATH;
 
 /**
  * 初始化 {@link org.springframework.web.servlet.DispatcherServlet}
@@ -13,6 +13,7 @@ import static com.mingri.prize.commons.constant.WebConstant.INITIALIZE_PATH;
 @Slf4j(topic = "Initialize DispatcherServlet")
 @RestController
 public final class InitializeDispatcherServletController {
+
 
     @GetMapping(INITIALIZE_PATH)
     public void initializeDispatcherServlet() {
