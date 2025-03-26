@@ -4,6 +4,7 @@ import com.mingri.prize.framework.starter.web.ApplicationContextHolder;
 import com.mingri.prize.framework.starter.web.init.ApplicationInitializingEvent;
 import org.springframework.context.ApplicationListener;
 import org.springframework.core.Ordered;
+import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
 import java.util.*;

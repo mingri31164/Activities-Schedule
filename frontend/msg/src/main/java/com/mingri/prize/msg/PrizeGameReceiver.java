@@ -29,7 +29,7 @@ public class PrizeGameReceiver {
         //将用户活动信息保存到数据库中
         boolean save = cardUserGameService.save(cardUserGame);
         if(save){
-            logger.warn(RabbitKeys.QUEUE_PLAY, " 用户中奖信息保存失败，", cardUserGame.toString());
+            logger.warn(RabbitKeys.QUEUE_PLAY, " 用户参与活动信息保存失败，", cardUserGame.toString());
         }
     }
 

@@ -6,29 +6,36 @@ import com.mingri.prize.commons.annotition.SlideLimiter;
 import com.mingri.prize.commons.config.RabbitKeys;
 import com.mingri.prize.commons.config.RedisKeys;
 import com.mingri.prize.commons.db.entity.*;
+import com.mingri.prize.commons.db.enums.LotteryChainMarkEnum;
 import com.mingri.prize.commons.db.service.CardGameRulesService;
 import com.mingri.prize.commons.db.service.CardGameService;
 import com.mingri.prize.commons.db.service.GameLoadService;
+import com.mingri.prize.commons.db.service.handler.lottery.dto.LotteryActDTO;
 import com.mingri.prize.commons.utils.ApiResult;
 import com.mingri.prize.commons.utils.RedisUtil;
+import com.mingri.prize.framework.starter.designpattern.chain.AbstractChainContext;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiImplicitParams;
 import io.swagger.annotations.ApiOperation;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import java.text.SimpleDateFormat;
 import javafx.util.Pair;
 import java.util.*;
 
+
 @Slf4j
 @RestController
 @RequestMapping("/api/act")
 @Api(tags = {"抽奖模块"})
+@RequiredArgsConstructor
 public class ActController {
 
     @Autowired
@@ -44,8 +51,57 @@ public class ActController {
     @Autowired
     private CardGameService gameService;
 
-    static int defaultMaxEnterTime = 10;
-    static int defaultMaxGoalTime = 20;
+    private final AbstractChainContext<LotteryActDTO> lotteryActDTOAbstractChainContext;
+
+
+    @SlideLimiter(
+            key = "lottery:ip:",
+            window = 60,
+            limit = 100,
+            dimension = "#request.remoteAddr"
+    )
+    @GetMapping("/go/{gameid}")
+    @ApiOperation(value = "抽奖")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name="gameid",value = "活动id",example = "1",required = true)
+    })
+    public ApiResult<Object> act(@PathVariable int gameid, HttpServletRequest request){
+
+        CardUser user = (CardUser) request.getSession().getAttribute("user");
+        lotteryActDTOAbstractChainContext.handler
+                (LotteryChainMarkEnum.LOTTERY_ACT_FILTER.name(), new LotteryActDTO(user, gameid, request));
+
+        // 增加用户参与抽奖次数
+        redisUtil.incr(RedisKeys.USERENTER + gameid + "_" + user.getId(), 1);
+
+        // 获取令牌
+        Long token = luaScript.tokenCheck(RedisKeys.TOKENS + gameid ,String.valueOf(new Date().getTime()));
+        if(token == 0){
+            return new ApiResult(-1,"奖品已抽光",null);
+        }else if(token == 1){
+            return new ApiResult(0,"未中奖",null);
+        }else{
+            //token有效，中奖！
+            String productKey = RedisKeys.TOKEN + gameid + "_" + token;
+            CardProductDto product = (CardProductDto) redisUtil.get(productKey);
+            redisUtil.incr(RedisKeys.USERHIT + gameid + "_" + user.getId(), 1);
+            log.info("恭喜中奖！,key = {}, gameId = {}", productKey, product.getId());
+
+            //mq保存中奖信息
+            CardUserHit cardUserHit = CardUserHit.builder()
+                    .gameid(gameid)
+                    .hittime(new Date())
+                    .userid(user.getId())
+                    .productid(product.getId())
+                    .build();
+            String jsonString = JSON.toJSONString(cardUserHit);
+            rabbitTemplate.convertAndSend(RabbitKeys.QUEUE_HIT, jsonString);
+
+            return new ApiResult<>(1, "恭喜中奖", product);
+        }
+
+    }
+
 
     @GetMapping("/limits/{gameid}")
     @ApiOperation(value = "剩余次数")
@@ -100,92 +156,6 @@ public class ActController {
 
         return new ApiResult<>(1,"成功",map);
     }
-
-
-
-    @SlideLimiter(
-            key = "lottery:ip:",
-            window = 60,
-            limit = 100,
-            dimension = "#request.remoteAddr"
-    )
-    @GetMapping("/go/{gameid}")
-    @ApiOperation(value = "抽奖")
-    @ApiImplicitParams({
-            @ApiImplicitParam(name="gameid",value = "活动id",example = "1",required = true)
-    })
-    public ApiResult<Object> act(@PathVariable int gameid, HttpServletRequest request){
-        // 获取活动信息 判断活动是否进行中
-        CardGame game = (CardGame) redisUtil.get(RedisKeys.INFO + gameid);
-        Date now = new Date();
-        if(game == null || game.getStarttime().compareTo(now) > 0){
-            log.info("活动当前时间：{}, 开始时间：{}", now, game.getStarttime());
-            return new ApiResult(-1,"活动还未开始",null);
-        }else if (game.getEndtime().compareTo(now) < 0){
-            return new ApiResult(-1,"活动已结束",null);
-        }
-
-        // 判断抽奖次数
-        CardUser user = (CardUser) request.getSession().getAttribute("user");
-
-        Integer userEnter = (Integer) redisUtil.get(RedisKeys.USERENTER + gameid + "_" + user.getId());
-        Integer maxEnterTimes = (Integer) redisUtil.hget(RedisKeys.MAXENTER + gameid, user.getLevel().toString());
-        if(maxEnterTimes == null)maxEnterTimes = defaultMaxEnterTime;
-        if(userEnter == null){
-            redisUtil.set(RedisKeys.USERENTER + gameid + "_" + user.getId(), 1);
-
-            // mq保存参加活动记录
-            CardUserGame cardUserGame = new CardUserGame();
-            cardUserGame.setGameid(gameid);
-            cardUserGame.setUserid(user.getId());
-            cardUserGame.setCreatetime(now);
-            String jsonString = JSON.toJSONString(cardUserGame);
-            rabbitTemplate.convertAndSend(RabbitKeys.QUEUE_PLAY, jsonString);
-        }else{
-            if(userEnter >= maxEnterTimes)return new ApiResult<>(-1,"您的抽奖次数已用完",null);
-        }
-        redisUtil.incr(RedisKeys.USERENTER + gameid + "_" + user.getId(), 1);
-
-        // 判断中奖次数
-        Integer maxGoalTimes = (Integer) redisUtil.hget(RedisKeys.MAXGOAL + gameid, user.getLevel().toString());
-        Integer userGoalTimes = (Integer) redisUtil.get(RedisKeys.USERHIT + gameid + "_" + user.getId());
-        if(maxGoalTimes == null)maxGoalTimes = defaultMaxGoalTime;
-        if(userGoalTimes == null){
-            redisUtil.set(RedisKeys.USERHIT + gameid + "_" + user.getId(), 0);
-            userGoalTimes = 0;
-        }
-        if(userGoalTimes >= maxGoalTimes){
-            return new ApiResult<>(-1,"您已达到最大中奖数",null);
-        }
-
-        // 获取令牌
-        Long token = luaScript.tokenCheck(RedisKeys.TOKENS + gameid ,String.valueOf(new Date().getTime()));
-        if(token == 0){
-            return new ApiResult(-1,"奖品已抽光",null);
-        }else if(token == 1){
-            return new ApiResult(0,"未中奖",null);
-        }else{
-            //token有效，中奖！
-            String productKey = RedisKeys.TOKEN + gameid + "_" + token;
-            CardProductDto product = (CardProductDto) redisUtil.get(productKey);
-            redisUtil.incr(RedisKeys.USERHIT + gameid + "_" + user.getId(), 1);
-            log.info("恭喜中奖！,key = {}, gameId = {}", productKey, product.getId());
-
-            //mq保存中奖信息
-            CardUserHit cardUserHit = new CardUserHit();
-            cardUserHit.setGameid(gameid);
-            cardUserHit.setHittime(now);
-            cardUserHit.setUserid(user.getId());
-            cardUserHit.setProductid(product.getId());
-            String jsonString = JSON.toJSONString(cardUserHit);
-            rabbitTemplate.convertAndSend(RabbitKeys.QUEUE_HIT, jsonString);
-
-            return new ApiResult<>(1, "恭喜中奖", product);
-        }
-
-    }
-
-
 
 
 

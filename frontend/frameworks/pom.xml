@@ -12,5 +12,9 @@
     <artifactId>frameworks</artifactId>
     <packaging>pom</packaging>
 
+    <modules>
+        <module>designpattern</module>
+        <module>web</module>
+    </modules>
 
 </project>
