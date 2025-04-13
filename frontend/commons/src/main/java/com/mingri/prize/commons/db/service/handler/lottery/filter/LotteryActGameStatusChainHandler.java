@@ -32,7 +32,7 @@ public class LotteryActGameStatusChainHandler implements LotteryActChainFilter<L
     @Override
     public void handler(LotteryActDTO lotteryActDTO) {
 
-        Integer gameid = lotteryActDTO.getGameid();
+        String gameid = lotteryActDTO.getGameid();
         // 获取活动信息 判断活动是否进行中
         CardGame game = (CardGame) redisUtil.get(RedisKeys.INFO + gameid);
         Date now = new Date();

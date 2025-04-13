@@ -14,7 +14,7 @@ import java.util.Date;
  *
  * @TableName card_user_hit
  */
-@Builder
+@Data
 @TableName(value ="card_user_hit")
 public class CardUserHit implements Serializable {
     /**

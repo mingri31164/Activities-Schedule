@@ -37,7 +37,7 @@ public class LotteryActUserStatusChainHandler implements LotteryActChainFilter<L
     @Override
     public void handler(LotteryActDTO lotteryActDTO) {
         CardUser user = lotteryActDTO.getCardUser();
-        Integer gameid = lotteryActDTO.getGameid();
+        String gameid = lotteryActDTO.getGameid();
 
         // 判断抽奖次数
         Integer userEnter = (Integer) redisUtil.get(RedisKeys.USERENTER + gameid + "_" + user.getId());
@@ -48,7 +48,7 @@ public class LotteryActUserStatusChainHandler implements LotteryActChainFilter<L
 
             // mq保存参加活动记录
             CardUserGame cardUserGame = CardUserGame.builder()
-                    .gameid(gameid)
+                    .gameid(Integer.valueOf(gameid))
                     .userid(user.getId())
                     .createtime(new Date())
                     .build();

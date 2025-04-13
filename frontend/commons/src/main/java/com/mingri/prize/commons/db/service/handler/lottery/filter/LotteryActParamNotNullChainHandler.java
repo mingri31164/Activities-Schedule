@@ -20,9 +20,6 @@ public class LotteryActParamNotNullChainHandler implements LotteryActChainFilter
         if (StrUtil.isBlank(String.valueOf(lotteryActDTO.getGameid()))) {
             throw new ClientException("活动标识不能为空");
         }
-        if (StrUtil.isBlank((CharSequence) lotteryActDTO.getRequest())) {
-            throw new ClientException("网络请求不能为空");
-        }
 
     }
 

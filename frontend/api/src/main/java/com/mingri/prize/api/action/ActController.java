@@ -69,7 +69,7 @@ public class ActController {
 
         CardUser user = (CardUser) request.getSession().getAttribute("user");
         lotteryActDTOAbstractChainContext.handler
-                (LotteryChainMarkEnum.LOTTERY_ACT_FILTER.name(), new LotteryActDTO(user, gameid, request));
+                (LotteryChainMarkEnum.LOTTERY_ACT_FILTER.name(), new LotteryActDTO(user, String.valueOf(gameid)));
 
         // 增加用户参与抽奖次数
         redisUtil.incr(RedisKeys.USERENTER + gameid + "_" + user.getId(), 1);
@@ -88,12 +88,11 @@ public class ActController {
             log.info("恭喜中奖！,key = {}, gameId = {}", productKey, product.getId());
 
             //mq保存中奖信息
-            CardUserHit cardUserHit = CardUserHit.builder()
-                    .gameid(gameid)
-                    .hittime(new Date())
-                    .userid(user.getId())
-                    .productid(product.getId())
-                    .build();
+            CardUserHit cardUserHit = new CardUserHit();
+            cardUserHit.setGameid(gameid);
+            cardUserHit.setHittime(new Date());
+            cardUserHit.setUserid(user.getId());
+            cardUserHit.setProductid(product.getId());
             String jsonString = JSON.toJSONString(cardUserHit);
             rabbitTemplate.convertAndSend(RabbitKeys.QUEUE_HIT, jsonString);
 
